@@ -1,7 +1,7 @@
 {
   "name": "log03-googleblack",
   "version": "1.0.0",
-  "description": "",
+  "description": "\\",
   "main": "index.js",
   "type": "module",
   "types": "dist/index",
@@ -22,8 +22,10 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "@google-cloud/local-auth": "^3.0.1",
     "ansi-styles": "^6.2.1",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "googleapis": "^134.0.0"
   }
 }

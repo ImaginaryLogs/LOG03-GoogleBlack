@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "NodeNext",
+        "allowImportingTsExtensions": true,
+        "emitDeclarationOnly": true,
+        "declaration": true,
+        "allowJs": false,
+        "moduleResolution": "NodeNext",
+        "target": "ES2022",
+        "sourceMap": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "dist",
+        "noEmit": false
+    },
+    "include": ["src/**/*"],
+}
