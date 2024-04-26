@@ -8,9 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import express from "express";
-import * as fsp from 'fs/promises'; //  File system module
 import * as path from 'node:path'; //  File Path module
 import { try_redirect } from "../middleware/midwares.mjs";
+import { GetOAuthCookies } from "./google_credit_handler.mjs";
 // PATHS
 const PATH_CLIENT = path.join(process.cwd(), 'src/client');
 const PATH_CREDIT = path.join(PATH_CLIENT, 'client_secrets.json');
@@ -20,18 +20,31 @@ const PATH_DATABASE = path.join(path.dirname(process.cwd()), 'db');
 const urlGoogleScope = ['https://www.googleapis.com/auth/calendar'];
 const regexDateYMD = /^\d{4}-\d{2}-\d{2}$/;
 const api = express.Router();
-const load_stored_settings = () => __awaiter(void 0, void 0, void 0, function* () {
-    let content = yield fsp.readFile(PATH_SETTINGS);
-    let data = JSON.parse(content.toString());
-    return new Promise((resolve, reject) => {
-        resolve(data);
-    });
+const load_stored_settings = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const content = req.cookies['user_settings'];
+        return content;
+    }
+    catch (err) {
+        return null;
+    }
 });
-const save_settings = (new_information) => __awaiter(void 0, void 0, void 0, function* () {
+const save_settings = (req, res, new_settings) => __awaiter(void 0, void 0, void 0, function* () {
     let current_settings = {};
-    current_settings = yield load_stored_settings();
+});
+const load_stored_credits = (req) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const tokens = yield GetOAuthCookies(req);
+    }
+    catch (err) {
+    }
+});
+const save_credits = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 api.use(express.json());
-api.get('/settings/load', try_redirect((req, res) => __awaiter(void 0, void 0, void 0, function* () { })));
+api.get('/settings/load', try_redirect((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    res.sendStatus(404);
+    res.end();
+})));
 export default api;
 //# sourceMappingURL=api.mjs.map

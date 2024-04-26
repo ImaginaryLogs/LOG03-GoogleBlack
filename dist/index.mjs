@@ -10,16 +10,18 @@ const PATH_ROOT = proc.cwd();
 const PATH_CLIENT = path.join(PATH_ROOT, '/client');
 const PATH_CREDIT = path.join(PATH_CLIENT, 'client_secrets.json');
 dotenv.config({});
-const port = 8080;
+const port = Number(proc.env.PORT) || 8080;
 const server = express();
+console.log(path.join(PATH_ROOT, '/public'));
 server.get('/', (request, response) => {
     response.sendFile('index.html', { root: path.join(PATH_ROOT, 'public//pages//') });
     log_actions(request, response, { mes: `${path.join(PATH_ROOT, 'public//pages//')}` });
 });
+server.use(try_log);
 server.use('/api', api_app);
 server.use('/google', credit);
-server.use('/public', try_log(express.static('public')));
-server.use('/app', try_log(express.static('app')));
+server.use('/app', express.static('/app'));
+server.use('/public', express.static(path.join(PATH_ROOT, '/public')));
 server.listen(port, 'localhost', () => {
     console.log(`Listening on Port ${port}\nWebsite: http://localhost:${port}/`);
 });

@@ -52,23 +52,31 @@ function OAuthRedirect(req, res) {
     });
 }
 /**
+ *
+ * @param req Incoming Request
+ * @returns Cookies from the browswer
+ */
+export function GetOAuthCookies(req) {
+    // Credentials to send
+    var credentials = {};
+    // Get the credits and and assign it 
+    for (const cookieName of cookieNames)
+        credentials[cookieName] = req.cookies[cookieName];
+    return credentials;
+}
+/**
  * Reads any of local storage's cookies.
  * @param req Requested incoming data
  * @param res Outgoing response
  */
 function ReadOAuthCookies(req, res) {
-    return __awaiter(this, void 0, void 0, function* () {
-        console.log(OAuth2Client);
-        // Credentials to send
-        var credentials = {};
-        // Get the credits and and assign it 
-        for (const cookieName of cookieNames)
-            credentials[cookieName] = req.cookies[cookieName];
-        console.log(credentials);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.write("Sending " + JSON.stringify(OAuth2Client));
-        res.end();
-    });
+    console.log(OAuth2Client);
+    // Credentials to send
+    var credentials = GetOAuthCookies(req);
+    console.log(credentials);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write("Sending " + JSON.stringify(credentials));
+    res.end();
 }
 credit_router.use('/login', try_redirect(GetOAuthURL));
 credit_router.use('/credit_read', try_redirect(ReadOAuthCookies));

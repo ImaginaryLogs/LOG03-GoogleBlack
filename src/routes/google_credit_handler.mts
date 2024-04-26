@@ -58,7 +58,7 @@ async function OAuthRedirect(req: Request, res: Response){
  * @param req Incoming Request
  * @returns Cookies from the browswer
  */
-export function GetOAuthCookies(req: Request): {[key: string]: any}{
+export function GetOAuthCookies(req: Request): {[key: string]: any} {
     // Credentials to send
 	var credentials: {[key: string]: any} = {}
 	
@@ -86,7 +86,6 @@ function ReadOAuthCookies(req: Request, res: Response){
     res.write("Sending " + JSON.stringify(credentials));
     res.end();
 }
-
 
 credit_router.use('/login', try_redirect(GetOAuthURL));
 

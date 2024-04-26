@@ -97,11 +97,12 @@ export function error_handler (error: Error, req: Request, res:Response, next: N
     const head_style = `${http_method_colors[method]}`;
     var error_mes = `${get_time()} ${styles.redBright.open}[!]: SERVER ERROR${styles.color.close}`;
 
-    console.log(`${get_time()} ${styles.yellow.open}${req.baseUrl} ${head_style}`)
+    console.log(`${get_time()} | ${styles.yellow.open}${req.baseUrl} ${head_style}`)
 
     if (process.env.LOG_MID == 'y') {
-        error_mes = `${styles.red}└─╢ ERR (${error.name}): ${styles.color.close}${error.toString}`;
+        error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
+        console.log(error.message);
         //console.error(error);
     }
 
@@ -132,9 +133,9 @@ export const try_redirect = (controller: Function) => async (req: Request, res: 
     }
 }
 
-export const try_log = (controller: Function) => async (req: Request, res: Response, next: any) => {
-    log_actions(req, res)
-    next()
+export const try_log = (req: Request, res: Response, next: NextFunction) => {
+    log_actions(req, res);
+    next();
 }
 
 /**

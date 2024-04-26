@@ -11,10 +11,11 @@ import styles from 'ansi-styles';
 import dotenv from 'dotenv';
 import * as proc from 'process';
 dotenv.config({});
-var http_method_colors = {};
-http_method_colors['GET'] = styles.green.open;
-http_method_colors['POST'] = styles.yellow.open;
-http_method_colors['DELETE'] = styles.red.open;
+var http_method_colors = {
+    'GET': styles.green.open,
+    'POST': styles.yellow.open,
+    'DELETE': styles.red.open
+};
 /**
  * Get time at current process.
  * @returns retuns time stamp
@@ -24,7 +25,7 @@ function get_time() {
     const hour = date.getHours();
     const mins = date.getMinutes();
     const secs = date.getSeconds();
-    const time_info = `${("0" + hour).slice(-2)}:${("0" + mins).slice(-2)}:${("0" + secs).slice(-2)}`;
+    const time_info = proc.env.LOG_TIME === 'y' ? `${("0" + hour).slice(-2)}:${("0" + mins).slice(-2)}:${("0" + secs).slice(-2)}` : ``;
     return time_info;
 }
 /**
@@ -76,15 +77,16 @@ export function log_actions(req, res, options) {
  * @param {NextFunction} next Next function down the script
  * @returns {Response} Returns an error response
  */
-export const error_handler = (error, req, res, next) => {
+export function error_handler(error, req, res, next) {
     const method = req.method;
     // Take note, 'y'es or 'n'o values only
     const head_style = `${http_method_colors[method]}`;
     var error_mes = `${get_time()} ${styles.redBright.open}[!]: SERVER ERROR${styles.color.close}`;
-    console.log(`${get_time()} ${styles.yellow.open}${req.baseUrl} ${head_style}`);
+    console.log(`${get_time()} | ${styles.yellow.open}${req.baseUrl} ${head_style}`);
     if (process.env.LOG_MID == 'y') {
-        error_mes = `${styles.red}└─╢ ERR (${error.name}): ${styles.color.close}${error.toString}`;
+        error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
+        console.log(error.message);
         //console.error(error);
     }
     //console.log(error_mes);
@@ -96,7 +98,7 @@ export const error_handler = (error, req, res, next) => {
             return res.send('Bad input address');
     }
     return res.send('Unknown');
-};
+}
 /**
  * Tries to redirect a function error a error handler.
  * @param controller
@@ -106,14 +108,16 @@ export const try_redirect = (controller) => (req, res, next) => __awaiter(void 0
     try {
         yield controller(req, res);
     }
-    catch (error) {
-        next(error);
+    catch (err) {
+        console.log(typeof err);
+        console.error(err);
+        next(err);
     }
 });
-export const try_log = (controller) => (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    yield controller(req, res);
+export const try_log = (req, res, next) => {
     log_actions(req, res);
-});
+    next();
+};
 /**
  * Wraps the result generic on the promise for better error handling.
  * @param awaiting_process
