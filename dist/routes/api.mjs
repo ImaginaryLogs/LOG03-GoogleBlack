@@ -9,8 +9,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import express from "express";
 import * as path from 'node:path'; //  File Path module
-import { try_redirect } from "../middleware/midwares.mjs";
-import { GetOAuthCookies } from "./google_credit_handler.mjs";
+import { try_redirect, get_result } from "../middleware/midwares.mjs";
+import { GetOAuthURL, } from "./google_credit_handler.mjs";
 // PATHS
 const PATH_CLIENT = path.join(process.cwd(), 'src/client');
 const PATH_CREDIT = path.join(PATH_CLIENT, 'client_secrets.json');
@@ -29,22 +29,30 @@ const load_stored_settings = (req) => __awaiter(void 0, void 0, void 0, function
         return null;
     }
 });
-const save_settings = (req, res, new_settings) => __awaiter(void 0, void 0, void 0, function* () {
-    let current_settings = {};
+const save_settings = (req, newInfo) => __awaiter(void 0, void 0, void 0, function* () {
+    let resultSetting = yield get_result(load_stored_settings(req));
+    let payloadSettings = {
+        markdown_path: '',
+        web: { '--bg': '#080808', '--text': 'white' },
+    };
+    if (resultSetting.ok) {
+        payloadSettings = resultSetting.value;
+        for (const updatedKey of Object.keys(newInfo))
+            payloadSettings[updatedKey] = newInfo[updatedKey];
+    }
 });
-const load_stored_credits = (req) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const tokens = yield GetOAuthCookies(req);
-    }
-    catch (err) {
-    }
+const load_stored_credits = (req, res, newInfo) => __awaiter(void 0, void 0, void 0, function* () {
 });
 const save_credits = (req) => __awaiter(void 0, void 0, void 0, function* () {
 });
 api.use(express.json());
+api.post('/login', try_redirect(GetOAuthURL));
 api.get('/settings/load', try_redirect((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    res.sendStatus(404);
-    res.end();
+    res.cookie('user_settings', save_settings(req, req.body));
+    res.writeHead(200);
+    res.send();
 })));
+api.post('/settings/save', try_redirect((req, res) => {
+}));
 export default api;
 //# sourceMappingURL=api.mjs.map

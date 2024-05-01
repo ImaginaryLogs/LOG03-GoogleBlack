@@ -2,6 +2,4 @@
  Typescript version of BlackAllium
 
 
-# Commands
-tsc -w
 

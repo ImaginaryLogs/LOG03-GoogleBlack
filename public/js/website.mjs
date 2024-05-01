@@ -11,6 +11,7 @@ function main() {
     bPath: [bInputTaskFile, {}],
     bMdList: [bListMarkdown, {}],
     bAddEvents: [bEventsSync, {}],
+    bLogin: [bLoginGoogle, {}]
   };
 
   Object.entries(ctrlButtons).forEach(([buttonName, value]) => {
@@ -18,14 +19,23 @@ function main() {
     if (value[1] != null) value[1].onclick = value[0];
   });
 
-  const buttonsValid = document.getElementsByClassName("pressable");
+  var buttonsValid = document.getElementsByClassName("pressable");
   const clickSound = new Audio("/public/sounds/buttonClick.mp3");
-  for (const button of buttonsValid) {
+// 
+  // Array.prototype.forEach.call(buttonsValid, function (buttonsValid) {
+    // console.log(button);
+    // button.addEventListener("click", () => {
+      // clickSound.play();
+    // });
+  // })
+
+  for(const button of buttonsValid) {
     console.log(button);
     button.addEventListener("click", () => {
       clickSound.play();
     });
   }
+  
 
   const forms = document.getElementsByTagName("form");
   for (const form of forms) {
@@ -71,22 +81,22 @@ function main() {
         loading_screen.classList.add("hidden");
       }, 250);
     }
-    
-    await fetch("/api/settings/load")
-      .then(async (res) => {
-        console.log(res);
-        response = await fetch("/api/settings/load");
-      })
-      .catch(async (err) => {
-        console.error(err);
-      });
+    // 
+    // await fetch("/api/settings/load")
+      // .then(async (res) => {
+        // console.log(res);
+        // response = await fetch("/api/settings/load");
+      // })
+      // .catch(async (err) => {
+        // console.error(err);
+      // });
     console.log(response);
-    const data = await response.json();
+    //const data = await response.json();
     console.log("Loaded");
-    console.log(data);
-    cssProps.style.setProperty("--bg", data.web["--bg"]);
-    cssProps.style.setProperty("--text", data.web["--text"]);
-    isDarkMode = data.web["--text"] == "white" ? true : false;
+    //console.log(data);
+    //cssProps.style.setProperty("--bg", data.web["--bg"]);
+    //cssProps.style.setProperty("--text", data.web["--text"]);
+    //isDarkMode = data.web["--text"] == "white" ? true : false;
     cssProps.style.getPropertyValue("--bg");
 
     
@@ -158,6 +168,10 @@ const bUpdateWebTheme = () => {
     body: JSON.stringify(colorObj),
   });
 };
+
+const bLoginGoogle = async () =>{
+  location.href = '/google/login';
+}
 
 const bListGoogleCalendar = async () => {
   LoadingBarStatus("fetch", "Fetching...");

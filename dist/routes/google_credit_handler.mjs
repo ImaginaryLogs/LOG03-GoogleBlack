@@ -21,11 +21,13 @@ const credit_router = express.Router();
  * @param res Outgoing response
  * @param next Next part of the script
  */
-function GetOAuthURL(request, response, next) {
+export function GetOAuthURL(request, response, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const url = OAuth2Client.generateAuthUrl({
             access_type: "offline",
             scope: scopes,
+            prompt: "consent",
+            response_type: "code"
         });
         response.redirect(url);
     });

@@ -1,4 +1,8 @@
 
+# Commands for Devs
+tsc -w
+ctrl + alt + r to run rest
+
 # References
 ![](https://www.youtube.com/watch?v=H91aqUHn8sE)
 ![Alex Ziskind](https://www.youtube.com/watch?v=4zdBk6wisxc)

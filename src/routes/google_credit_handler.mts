@@ -6,11 +6,12 @@ import { oauth2 } from "googleapis/build/src/apis/oauth2/index.js";
 import { error_handler, try_redirect } from "../middleware/midwares.mjs";
 
 // OAuth Authentication Software
-const OAuth2Client = new google.auth.OAuth2(
+export const OAuth2Client = new google.auth.OAuth2(
     process.env.CLIENT_ID, 
     process.env.CLIENT_SECRET, 
     process.env.REDIRECT_URL
 )
+
 const scopes = ['https://www.googleapis.com/auth/calendar']
 const cookieNames = [ 'access_token', 'refresh_token', 'scope', 'token_type']
 
@@ -22,10 +23,12 @@ const credit_router = express.Router();
  * @param res Outgoing response
  * @param next Next part of the script
  */
-async function GetOAuthURL(request: Request, response: Response, next: NextFunction){
+export async function GetOAuthURL(request: Request, response: Response, next: NextFunction){
     const url = OAuth2Client.generateAuthUrl({
         access_type: "offline",
         scope: scopes,
+        prompt: "consent",
+        response_type: "code"
     })
     response.redirect(url);
 }

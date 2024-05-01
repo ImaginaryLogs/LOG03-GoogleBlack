@@ -30,10 +30,10 @@ function get_time() {
 }
 /**
  * Logs the actions of a function
- * @param {Request} req the requested data
- * @param {Response} res the response of the function
- * @param {string} mes custom made message by the function
- * @param {number} tab number of tabs
+ * @param {Request} req     the requested data
+ * @param {Response} res    the response of the function
+ * @param {string} mes  custom made message by the function
+ * @param {number} tab  number of tabs
  */
 export function log_actions(req, res, options) {
     var _a, _b;
@@ -58,11 +58,11 @@ export function log_actions(req, res, options) {
             break;
         case 'POST':
             console.log(`${get_time()} | ${head_style}└─╢ REQ: ${styles.color.close}===============|`);
-            console.log(Request.toString);
+            console.table(req.body);
             break;
         case 'DELETE':
             console.log(`${get_time()} | ${head_style}└─╢ DEL: ${styles.white}---------------|`);
-            console.log(Request.toString);
+            console.log(req.body);
             break;
         default:
             console.log("ERROR");
@@ -83,7 +83,7 @@ export function error_handler(error, req, res, next) {
     const head_style = `${http_method_colors[method]}`;
     var error_mes = `${get_time()} ${styles.redBright.open}[!]: SERVER ERROR${styles.color.close}`;
     console.log(`${get_time()} | ${styles.yellow.open}${req.baseUrl} ${head_style}`);
-    if (process.env.LOG_MID == 'y') {
+    if (process.env.LOG_ERR == 'y') {
         error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
         console.log(error.message);

@@ -37,10 +37,10 @@ function get_time(): string {
 
 /**
  * Logs the actions of a function
- * @param {Request} req the requested data 
- * @param {Response} res the response of the function
- * @param {string} mes custom made message by the function
- * @param {number} tab number of tabs
+ * @param {Request} req     the requested data 
+ * @param {Response} res    the response of the function
+ * @param {string} mes  custom made message by the function
+ * @param {number} tab  number of tabs
  */
 export function log_actions(req: Request, res: Response, options?: {mes?: string ; tab?: number }): void{
     if (proc.env.LOG_MID === 'n') {
@@ -53,7 +53,7 @@ export function log_actions(req: Request, res: Response, options?: {mes?: string
     const logging_data = `${get_time()} | ${http_method_colors[`${method}`]}${method} ${styles.color.close}${req.originalUrl.toString()}`;
 
     var tab_chars = ' ';
-
+    
     if (typeof options !== undefined){
         const length = options?.tab ?? 0;
         for (var steps = 0; steps < length + 1; steps++){
@@ -70,11 +70,11 @@ export function log_actions(req: Request, res: Response, options?: {mes?: string
             break;
         case 'POST':
             console.log(`${get_time()} | ${head_style}└─╢ REQ: ${styles.color.close}===============|`);
-            console.log(Request.toString);
+            console.table(req.body);
             break;
         case 'DELETE':
             console.log(`${get_time()} | ${head_style}└─╢ DEL: ${styles.white}---------------|`);
-            console.log(Request.toString);
+            console.log(req.body);
             break;
         default:
             console.log("ERROR");
@@ -99,7 +99,7 @@ export function error_handler (error: Error, req: Request, res:Response, next: N
 
     console.log(`${get_time()} | ${styles.yellow.open}${req.baseUrl} ${head_style}`)
 
-    if (process.env.LOG_MID == 'y') {
+    if (process.env.LOG_ERR == 'y') {
         error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
         console.log(error.message);

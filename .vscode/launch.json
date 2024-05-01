@@ -8,13 +8,16 @@
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
+            "runtimeExecutable": "${workspaceFolder}/node_modules/nodemon/bin/nodemon.js",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/dist/index.mjs",
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
-            ]
+            ],
+            "restart": true,
+            "console": "integratedTerminal",
         }
     ]
 }
