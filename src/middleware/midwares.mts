@@ -7,7 +7,7 @@ import * as proc from 'process';
 
 type None = {_type: 'none'}
 
-type Some<T> = {_type: 'some', value: T};
+export type Some<T> = {_type: 'some', value: T};
 type Result<T, E = undefined> = { ok: true, value: T }
                             | { ok: false, error: E | undefined };
 
@@ -36,6 +36,32 @@ function get_time(): string {
 }
 
 /**
+ * Checks if .env variable exist
+ * @param variable The variable in .env you want to confirm exist
+ * @returns {string} String represent the state of the variable
+ */
+export const isEnvPropertyExist = (variable: string | undefined) => {
+	let color = styles.magenta.open;
+	switch(variable){
+		case undefined:
+			color = styles.yellow.open;
+			break;
+		case '1':
+		case 'Y':
+		case 'y':
+			color = styles.green.open
+			break;
+		case '0':
+		case 'N':
+		case 'n':
+			color = styles.red.open
+			break;
+	}
+
+	return `${color}${variable}${styles.color.close}`
+}
+
+/**
  * Logs the actions of a function
  * @param {Request} req     the requested data 
  * @param {Response} res    the response of the function
@@ -43,17 +69,21 @@ function get_time(): string {
  * @param {number} tab  number of tabs
  */
 export function log_actions(req: Request, res: Response, options?: {mes?: string ; tab?: number }): void{
-    if (proc.env.LOG_MID === 'n') {
-        return;
+
+    // if not logging gen
+    switch(proc.env.LOG_GENERAL){
+        case '0':
+        case 'N':
+        case 'n':
+            return;
     }
 
     const method: string = req.method;
     const color_code = http_method_colors;
-
     const logging_data = `${get_time()} | ${http_method_colors[`${method}`]}${method} ${styles.color.close}${req.originalUrl.toString()}`;
 
+    // ### Tabs to separate chain of command
     var tab_chars = ' ';
-    
     if (typeof options !== undefined){
         const length = options?.tab ?? 0;
         for (var steps = 0; steps < length + 1; steps++){
@@ -103,7 +133,6 @@ export function error_handler (error: Error, req: Request, res:Response, next: N
         error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
         console.log(error.message);
-        //console.error(error);
     }
 
     //console.log(error_mes);

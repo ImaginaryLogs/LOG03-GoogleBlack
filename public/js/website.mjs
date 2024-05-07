@@ -252,7 +252,7 @@ const bInputTaskFile = async () => {
     return idleStatus();
   }
   const response = await prowrap(
-    fetch("/api/settings/save", {
+    fetch("/api/settings/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(markData),

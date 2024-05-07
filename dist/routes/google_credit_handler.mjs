@@ -11,10 +11,10 @@ import express from "express";
 import { google } from 'googleapis';
 import { try_redirect } from "../middleware/midwares.mjs";
 // OAuth Authentication Software
-const OAuth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, process.env.REDIRECT_URL);
 const scopes = ['https://www.googleapis.com/auth/calendar'];
-const cookieNames = ['access_token', 'refresh_token', 'scope', 'token_type'];
+const cookie_names = ['access_token', 'refresh_token', 'id_token', 'scope', 'token_type'];
 const credit_router = express.Router();
+export const OAuth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, process.env.REDIRECT_URL);
 /**
  *
  * @param req Request Incoming data
@@ -27,7 +27,7 @@ export function GetOAuthURL(request, response, next) {
             access_type: "offline",
             scope: scopes,
             prompt: "consent",
-            response_type: "code"
+            response_type: "code",
         });
         response.redirect(url);
     });
@@ -40,16 +40,18 @@ export function GetOAuthURL(request, response, next) {
 function OAuthRedirect(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         const code = req.query.code;
-        const { tokens } = yield OAuth2Client.getToken(code);
+        const tokens = (yield OAuth2Client.getToken(code)).tokens;
         OAuth2Client.setCredentials(tokens);
-        const access_token = tokens.access_token;
-        const refresh_token = tokens.refresh_token;
-        const default_cookie_options = { maxAge: tokens.expiry_date, httpOnly: true };
-        for (const cookie_name of cookieNames) {
-            res.cookie(cookie_name, { tokens }[cookie_name], default_cookie_options);
-        }
+        const token_settings = { maxAge: tokens.expiry_date, httpOnly: true };
+        res.cookie("access_token", tokens.access_token, token_settings);
+        res.cookie("refresh_token", tokens.refresh_token, token_settings);
+        res.cookie("scope", tokens.scope, token_settings);
+        res.cookie("token_type", tokens.token_type, token_settings);
+        res.cookie("id_token", tokens.id_token, token_settings);
+        res.cookie("expiry_date", tokens.expiry_date, token_settings);
+        //res.cookie('expiry_date', tokens.expiry_date, token_settings)
         res.writeHead(200);
-        res.write("Logged In!" + JSON.stringify(OAuth2Client));
+        res.write(`[!] Logged In!\n - A: ${tokens.access_token}\n - R: ${tokens.refresh_token}\n - S: ${tokens.scope}\n - T: ${tokens.token_type}\n - I: ${tokens.id_token}`);
         res.end();
     });
 }
@@ -62,8 +64,9 @@ export function GetOAuthCookies(req) {
     // Credentials to send
     var credentials = {};
     // Get the credits and and assign it 
-    for (const cookieName of cookieNames)
+    for (const cookieName of cookie_names)
         credentials[cookieName] = req.cookies[cookieName];
+    console.log(credentials);
     return credentials;
 }
 /**
@@ -72,10 +75,7 @@ export function GetOAuthCookies(req) {
  * @param res Outgoing response
  */
 function ReadOAuthCookies(req, res) {
-    console.log(OAuth2Client);
-    // Credentials to send
     var credentials = GetOAuthCookies(req);
-    console.log(credentials);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.write("Sending " + JSON.stringify(credentials));
     res.end();

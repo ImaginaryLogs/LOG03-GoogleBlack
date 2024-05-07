@@ -29,6 +29,30 @@ function get_time() {
     return time_info;
 }
 /**
+ * Checks if .env variable exist
+ * @param variable The variable in .env you want to confirm exist
+ * @returns {string} String represent the state of the variable
+ */
+export const isEnvPropertyExist = (variable) => {
+    let color = styles.magenta.open;
+    switch (variable) {
+        case undefined:
+            color = styles.yellow.open;
+            break;
+        case '1':
+        case 'Y':
+        case 'y':
+            color = styles.green.open;
+            break;
+        case '0':
+        case 'N':
+        case 'n':
+            color = styles.red.open;
+            break;
+    }
+    return `${color}${variable}${styles.color.close}`;
+};
+/**
  * Logs the actions of a function
  * @param {Request} req     the requested data
  * @param {Response} res    the response of the function
@@ -37,12 +61,17 @@ function get_time() {
  */
 export function log_actions(req, res, options) {
     var _a, _b;
-    if (proc.env.LOG_MID === 'n') {
-        return;
+    // if not logging gen
+    switch (proc.env.LOG_GENERAL) {
+        case '0':
+        case 'N':
+        case 'n':
+            return;
     }
     const method = req.method;
     const color_code = http_method_colors;
     const logging_data = `${get_time()} | ${http_method_colors[`${method}`]}${method} ${styles.color.close}${req.originalUrl.toString()}`;
+    // ### Tabs to separate chain of command
     var tab_chars = ' ';
     if (typeof options !== undefined) {
         const length = (_a = options === null || options === void 0 ? void 0 : options.tab) !== null && _a !== void 0 ? _a : 0;
@@ -87,7 +116,6 @@ export function error_handler(error, req, res, next) {
         error_mes = `\t ${styles.red.open}└─╢ ERR (${error.name}): ${styles.color.close}${error.stack}\n`;
         console.log(error_mes);
         console.log(error.message);
-        //console.error(error);
     }
     //console.log(error_mes);
     res.status(400);
