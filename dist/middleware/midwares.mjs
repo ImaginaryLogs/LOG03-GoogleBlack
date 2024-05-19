@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import styles from 'ansi-styles';
 import dotenv from 'dotenv';
 import * as proc from 'process';
+import { apiError } from '../middleware/apiError.mjs';
 dotenv.config({});
 var http_method_colors = {
     'GET': styles.green.open,
@@ -117,15 +118,18 @@ export function error_handler(error, req, res, next) {
         console.log(error_mes);
         console.log(error.message);
     }
-    //console.log(error_mes);
     res.status(400);
+    if (error instanceof apiError) {
+        return res.send(`${error.name} ${error.message}`);
+    }
+    //console.log(error_mes);
     switch (error.name) {
         case 'ERR_INVALID_ARG_TYPE':
             return res.send('No input');
         case 'ENOENT':
             return res.send('Bad input address');
     }
-    return res.send('Unknown');
+    return res.send('Unknown Server Error');
 }
 /**
  * Tries to redirect a function error a error handler.

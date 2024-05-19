@@ -1,8 +1,8 @@
-import styles, {CSPair} from 'ansi-styles';
-
+import styles, { CSPair } from 'ansi-styles';
 import dotenv from 'dotenv';
 import express, { ErrorRequestHandler, Express, NextFunction, Request, Response } from "express";
 import * as proc from 'process';
+import { apiError } from '../middleware/apiError.mjs';
 
 
 type None = {_type: 'none'}
@@ -134,9 +134,14 @@ export function error_handler (error: Error, req: Request, res:Response, next: N
         console.log(error_mes);
         console.log(error.message);
     }
-
-    //console.log(error_mes);
     res.status(400);
+
+    if (error instanceof apiError) {
+		return res.send(`${error.name} ${error.message}`);
+	}
+	
+    //console.log(error_mes);
+    
     switch (error.name){
         case 'ERR_INVALID_ARG_TYPE':
             return res.send('No input');
@@ -144,7 +149,7 @@ export function error_handler (error: Error, req: Request, res:Response, next: N
             return res.send('Bad input address');
     }
     
-    return res.send('Unknown');
+    return res.send('Unknown Server Error');
 }
 
 /**

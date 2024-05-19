@@ -177,7 +177,7 @@ const bListGoogleCalendar = async () => {
   LoadingBarStatus("fetch", "Fetching...");
 
   let data = {};
-  let events = "Tasks\n";
+  let events = "Tasks:\n";
 
   const response = await prowrap(fetch("/api/events/list/googleCalendar"));
 
@@ -191,13 +191,11 @@ const bListGoogleCalendar = async () => {
     if (data.events == "")
       return LoadingBarStatus("failure", "No Events Detected");
     LoadingBarStatus("ok", "Idle");
-    for (var i = 0; i < Object.keys(data.events).length; i++) {
+    for (var i = 1; i < Object.keys(data.events).length; i++) {
       console.log(
-        `${data.events[i]["item"]}) ${data.events[i]["date"]} is ${data.events[i]["event"]}`
+        `${data.events[i]["item"]}) ${data.events[i]["date_start"]} is ${data.events[i]["event_title"]}`
       );
-      events += `${Number(data.events[i]["item"]) + 1}) ${
-        data.events[i]["date"]
-      } is ${data.events[i]["event"]}\n`;
+      events += `${Number(data.events[i]["item"]) + 1}) ${data.events[i]["date_start"]} is ${data.events[i]["event_title"]}\n`;
     }
   }
   screenList.innerHTML = data.events == "" ? `None` : events;

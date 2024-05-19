@@ -1,14 +1,19 @@
 import { authenticate } from '@google-cloud/local-auth';
 import cookieParser from "cookie-parser";
 import express, { Application, Express, Request, Response } from "express";
+import * as fs from 'fs';
 import * as fsp from 'fs/promises'; //  File system module
 import { Auth, google } from 'googleapis';
 import { oauth2 } from 'googleapis/build/src/apis/oauth2/index.js';
 import * as path from 'node:path'; //  File Path module
+import * as process from 'node:process'; //  Process is a native Node.js module that provides info and control over current process.
+import * as readline from 'node:readline';
 import * as proc from 'process';
 import * as def from '../etc/types.mjs';
+import { apiError } from '../middleware/apiError.mjs';
 import { error_handler, get_result, log_actions, Some, try_log, try_redirect } from "../middleware/midwares.mjs";
 import { GetOAuthCookies, GetOAuthURL, OAuth2Client } from "./google_credit_handler.mjs";
+
 
 // ### PATHS ###
 const PATH_CLIENT       : string = path.join(process.cwd(), 'src/client');
@@ -71,22 +76,30 @@ const load_stored_credits = (req: Request): Auth.OAuth2Client | null => {
 }
 
 interface event_info_type {
-    'item': string
+    'item'      : string
+    'event_title'     : string,
+    'event_description' : string,
     'date_start': string,
-    'event': string,
-    'date_end': string,
-    'id': string,
+    'date_end'  : string,
+    'id'        : string,
 }
 
 const default_event_info = {
-    'item': '',
+    'item'      : '',
+    'event_title': '',
+    'event_description': '',
     'date_start': '',
-    'event': '',
-    'date_end': '',
-    'id': ''
+    'date_end'  : '',
+    'id'        : ''
 }
 
-const list_events_on_calendar = async (res:Response, authorized_client: Auth.OAuth2Client) => {
+/**
+ * List Any events on Google Calendar
+ * @param res 
+ * @param authorized_client 
+ * @returns 
+ */
+const list_events_on_calendar = async (res: Response, authorized_client: Auth.OAuth2Client) => {
     const calendar_access = google.calendar({version: "v3", auth: authorized_client});
     google.options(authorized_client);
 
@@ -105,6 +118,7 @@ const list_events_on_calendar = async (res:Response, authorized_client: Auth.OAu
     let event_envalope: { events: event_info_type[] } = { events: [] };
     let datetime_start: string, datetime_end: string; 
 
+    // ### Event Processing
     if (!calendar_events || calendar_events.length === 0) {
         console.log('None');
         return event_envalope;
@@ -114,22 +128,37 @@ const list_events_on_calendar = async (res:Response, authorized_client: Auth.OAu
         event_point = default_event_info;
         datetime_start = event_data.start?.dateTime as string || event_data.start?.date as string;
         datetime_end   = event_data.end?.dateTime as string || event_data.end?.date as string;
-        
         // ### add important details of the event ###
         event_point = {
-            item:       String(index),
-            date_start: String(datetime_start),
-            date_end:   String(datetime_end),
-            event:      event_data.summary as string,
-            id:         event_data.id as string,
+            item        : String(index),
+            event_title : event_data.summary as string,
+            event_description       : event_data.description as string,
+            date_start  : String(datetime_start),
+            date_end    : String(datetime_end),
+            id          : event_data.id as string,
         }
         event_list.push(event_point);
     })
     event_envalope['events'] = event_list;
     console.table(event_envalope['events'])
-    res.writeHead(200, {'Content-Type': 'application/json'})
-    res.end()
+    return event_envalope
 }   
+
+const list_events_on_markdown = async (address: string) => {
+    var tasks_payload: { [tasks: string]: string[] } = {tasks: []};
+	const fileStream = fs.createReadStream(address);
+	const rl = readline.createInterface({
+		input: fileStream,
+		crlfDelay: Infinity,
+	});
+	for await (const line of rl) {
+		if (line.indexOf('- [') == -1) continue;
+		var taskToDo = line.substring(line.indexOf('- [') + 6);
+		tasks_payload['tasks'].push(taskToDo);
+	}
+	// console.log(payload);
+	return tasks_payload;
+}
 
 api.use(express.json());
 api.use(cookieParser());
@@ -142,22 +171,39 @@ api.get('/settings/update', try_redirect(async (req: Request, res:Response) => {
     res.send();
 }));
 
-
 api.get('/events/list/googleCalendar', try_redirect(async (req: Request, res: Response) => {
 		const client = load_stored_credits(req)
 
-		if (client === null) 
-            throw "new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, client.err)";
+		if (client == null) 
+            throw new apiError("NO_INTERNET_ACCESS", "Server must be connected to the net.", "");
 
 		const events = await (list_events_on_calendar(res, client));
 
 		if (events == null) 
-            throw "new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, events.err)";
+            throw new apiError("NO_INTERNET_ACCESS", "Server must be connected to the net.", "");
 
 		res.writeHead(200, { 'Content-Type': 'application/json' });
 		res.write(JSON.stringify(events), 'utf8');
 		res.end();
-        return '';
+	})
+);
+
+api.get(
+	'/events/list/markdown', try_redirect(async (req: Request, res: Response) => {
+		const settings = await load_stored_settings(req);
+        console.log(`${settings}`);
+        console.table(settings);
+		const result_MarkdownAddress = await get_result(settings['markdown_path']);
+        const events: { [tasks: string]: string[] } = {tasks: []};
+        if (result_MarkdownAddress.ok){
+    		const events = await list_events_on_markdown(result_MarkdownAddress.value as string);
+        } else {
+            throw new apiError("NO_MARKDOWN_ADDRESS", "Please input a markdown address");
+        }
+
+		res.writeHead(200, { 'Content-Type': 'application/json' });
+		res.write(JSON.stringify(events), 'utf8');
+		res.end();
 	})
 );
 

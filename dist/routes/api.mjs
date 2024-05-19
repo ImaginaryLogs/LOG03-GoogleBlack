@@ -7,11 +7,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __asyncValues = (this && this.__asyncValues) || function (o) {
+    if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
+    var m = o[Symbol.asyncIterator], i;
+    return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function () { return this; }, i);
+    function verb(n) { i[n] = o[n] && function (v) { return new Promise(function (resolve, reject) { v = o[n](v), settle(resolve, reject, v.done, v.value); }); }; }
+    function settle(resolve, reject, d, v) { Promise.resolve(v).then(function(v) { resolve({ value: v, done: d }); }, reject); }
+};
 import cookieParser from "cookie-parser";
 import express from "express";
+import * as fs from 'fs';
 import { google } from 'googleapis';
 import * as path from 'node:path'; //  File Path module
+import * as process from 'node:process'; //  Process is a native Node.js module that provides info and control over current process.
+import * as readline from 'node:readline';
 import * as def from '../etc/types.mjs';
+import { apiError } from '../middleware/apiError.mjs';
 import { get_result, try_redirect } from "../middleware/midwares.mjs";
 import { GetOAuthURL, OAuth2Client } from "./google_credit_handler.mjs";
 // ### PATHS ###
@@ -66,11 +77,18 @@ const load_stored_credits = (req) => {
 };
 const default_event_info = {
     'item': '',
+    'event_title': '',
+    'event_description': '',
     'date_start': '',
-    'event': '',
     'date_end': '',
     'id': ''
 };
+/**
+ * List Any events on Google Calendar
+ * @param res
+ * @param authorized_client
+ * @returns
+ */
 const list_events_on_calendar = (res, authorized_client) => __awaiter(void 0, void 0, void 0, function* () {
     const calendar_access = google.calendar({ version: "v3", auth: authorized_client });
     google.options(authorized_client);
@@ -86,6 +104,7 @@ const list_events_on_calendar = (res, authorized_client) => __awaiter(void 0, vo
     let event_list = [default_event_info];
     let event_envalope = { events: [] };
     let datetime_start, datetime_end;
+    // ### Event Processing
     if (!calendar_events || calendar_events.length === 0) {
         console.log('None');
         return event_envalope;
@@ -100,17 +119,46 @@ const list_events_on_calendar = (res, authorized_client) => __awaiter(void 0, vo
             // ### add important details of the event ###
             event_point = {
                 item: String(index),
+                event_title: event_data.summary,
+                event_description: event_data.description,
                 date_start: String(datetime_start),
                 date_end: String(datetime_end),
-                event: event_data.summary,
                 id: event_data.id,
             };
             event_list.push(event_point);
         });
     event_envalope['events'] = event_list;
     console.table(event_envalope['events']);
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end();
+    return event_envalope;
+});
+const list_events_on_markdown = (address) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, e_1, _b, _c;
+    var tasks_payload = { tasks: [] };
+    const fileStream = fs.createReadStream(address);
+    const rl = readline.createInterface({
+        input: fileStream,
+        crlfDelay: Infinity,
+    });
+    try {
+        for (var _d = true, rl_1 = __asyncValues(rl), rl_1_1; rl_1_1 = yield rl_1.next(), _a = rl_1_1.done, !_a; _d = true) {
+            _c = rl_1_1.value;
+            _d = false;
+            const line = _c;
+            if (line.indexOf('- [') == -1)
+                continue;
+            var taskToDo = line.substring(line.indexOf('- [') + 6);
+            tasks_payload['tasks'].push(taskToDo);
+        }
+    }
+    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+    finally {
+        try {
+            if (!_d && !_a && (_b = rl_1.return)) yield _b.call(rl_1);
+        }
+        finally { if (e_1) throw e_1.error; }
+    }
+    // console.log(payload);
+    return tasks_payload;
 });
 api.use(express.json());
 api.use(cookieParser());
@@ -122,15 +170,30 @@ api.get('/settings/update', try_redirect((req, res) => __awaiter(void 0, void 0,
 })));
 api.get('/events/list/googleCalendar', try_redirect((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const client = load_stored_credits(req);
-    if (client === null)
-        throw "new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, client.err)";
+    if (client == null)
+        throw new apiError("NO_INTERNET_ACCESS", "Server must be connected to the net.", "");
     const events = yield (list_events_on_calendar(res, client));
     if (events == null)
-        throw "new ApiError(NO_INTERNET_ACCESS, 'No internet access', 400, events.err)";
+        throw new apiError("NO_INTERNET_ACCESS", "Server must be connected to the net.", "");
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.write(JSON.stringify(events), 'utf8');
     res.end();
-    return '';
+})));
+api.get('/events/list/markdown', try_redirect((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const settings = yield load_stored_settings(req);
+    console.log(`${settings}`);
+    console.table(settings);
+    const result_MarkdownAddress = yield get_result(settings['markdown_path']);
+    const events = { tasks: [] };
+    if (result_MarkdownAddress.ok) {
+        const events = yield list_events_on_markdown(result_MarkdownAddress.value);
+    }
+    else {
+        throw new apiError("NO_MARKDOWN_ADDRESS", "Please input a markdown address");
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.write(JSON.stringify(events), 'utf8');
+    res.end();
 })));
 export default api;
 //# sourceMappingURL=api.mjs.map
