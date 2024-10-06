@@ -1,3 +1,4 @@
 node_modules/
 .env
 src/etc/client_secrets.json
+backend/dist
